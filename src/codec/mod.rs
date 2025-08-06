@@ -7,6 +7,7 @@ use std::{
 };
 
 use byteorder::{BigEndian, ReadBytesExt as _};
+use log::info;
 
 use crate::{
     bytes::{Buf as _, Bytes},
@@ -467,6 +468,7 @@ fn decode_response_pdu_bytes(bytes: Bytes) -> io::Result<Response> {
             let more_follows = rdr.read_u8()? == 0xff;
             let next_object_id = rdr.read_u8()?;
             let count = rdr.read_u8()?;
+            info!("HERE: objects");
             let mut objects = Vec::with_capacity(count.into());
             for _ in 0..count {
                 let id = rdr.read_u8()?;
@@ -482,6 +484,7 @@ fn decode_response_pdu_bytes(bytes: Bytes) -> io::Result<Response> {
                 let value = bytes.slice(position..position + len);
                 rdr.set_position((position + len) as u64);
 
+                info!("HERE: objects: {id} {value:?} ");
                 objects.push(DeviceIdObject { id, value });
             }
             ReadDeviceIdentification(

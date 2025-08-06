@@ -4,6 +4,7 @@
 use std::io::{Cursor, Error, ErrorKind, Result};
 
 use byteorder::{BigEndian, ReadBytesExt as _};
+use log::info;
 use smallvec::SmallVec;
 use tokio_util::codec::{Decoder, Encoder};
 
@@ -46,6 +47,10 @@ impl FrameDecoder {
 
         if buf.len() < adu_len + CRC_BYTE_COUNT {
             // Incomplete frame
+            info!("HERE incomplete frame while decoding buf len smaller than adu_len + crc");
+            info!("Here adu_len: {adu_len}");
+            info!("buf len: {}", buf.len());
+            info!("buffer: {buf:?}");
             return Ok(None);
         }
 
@@ -212,6 +217,8 @@ fn get_response_pdu_len(adu_buf: &BytesMut) -> Result<Option<usize>> {
 
                     offset += object_len;
                 }
+                info!("HERE buffer: {:?}", adu_buf);
+                info!("HERE: offset: {offset}");
                 offset - 1 // remove slave address byte
             }
             _ => {
@@ -296,6 +303,7 @@ where
         let result = get_pdu_len(buf).and_then(|pdu_len| {
             let Some(pdu_len) = pdu_len else {
                 // Incomplete frame
+                info!("HERE incomplete frame: {pdu_len:?}");
                 return Ok(None);
             };
 
@@ -324,6 +332,8 @@ impl Decoder for ClientCodec {
         let Some((slave_id, pdu_data)) = self.decoder.decode(buf)? else {
             return Ok(None);
         };
+
+        info!("HERE slave_id: {slave_id}, pdu_data: {pdu_data:?}");
 
         let hdr = Header { slave_id };
 
